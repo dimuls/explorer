@@ -1,0 +1,11 @@
+drop table schema_migrations;
+drop table peer_channel;
+drop table peer;
+drop table channel_config;
+drop table channel_chaincode;
+drop table chaincode;
+drop table state;
+drop table old_state;
+drop table transaction;
+drop table block;
+drop table channel;
