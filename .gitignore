@@ -1,3 +1,5 @@
 .idea
 config.yaml
 config-fabric.yaml
+*.pb.go
+local

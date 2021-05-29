@@ -2,6 +2,7 @@ package hf
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"sync"
@@ -20,7 +21,7 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/sirupsen/logrus"
 
-	"explorer/ent"
+	"explorer"
 	"explorer/pg"
 )
 
@@ -34,7 +35,7 @@ type ProcessorConfig struct {
 
 type Processor struct {
 	channelID string
-	storage   *pg.Storage
+	storage   *pg.Explorer
 	log       *logrus.Entry
 	wg        sync.WaitGroup
 	close     chan struct{}
@@ -49,7 +50,7 @@ func init() {
 	spew.Config.DisableMethods = true
 }
 
-func NewProcessor(c ProcessorConfig, s *pg.Storage) (p *Processor, err error) {
+func NewProcessor(c ProcessorConfig, s *pg.Explorer) (p *Processor, err error) {
 
 	log := logrus.WithFields(logrus.Fields{
 		"subsystem":  "processor",
@@ -188,18 +189,18 @@ const lifecycle = "_lifecycle"
 func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) error {
 
 	var (
-		peer           ent.Peer
-		channel        ent.Channel
-		channelConfigs []ent.ChannelConfig
-		chaincodes     []ent.Chaincode
-		block          ent.Block
-		transactions   []ent.Transaction
-		states         []ent.State
+		peer           = &explorer.Peer{}
+		channel        = &explorer.Channel{}
+		channelConfigs []*explorer.ChannelConfig
+		chaincodes     []*explorer.Chaincode
+		block          = &explorer.Block{}
+		transactions   []*explorer.Transaction
+		states         []*explorer.State
 	)
 
-	peer.URL = be.SourceURL
-	channel.ID = p.channelID
-	block.ChannelID = p.channelID
+	peer.Url = be.SourceURL
+	channel.Id = p.channelID
+	block.ChannelId = p.channelID
 
 	if be.Block.Header.Number > uint64(math.MaxInt64) {
 		return fmt.Errorf("block number greater than max int64")
@@ -227,10 +228,10 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 			return fmt.Errorf("unmarshal channel header: %w", err)
 		}
 
-		var transaction ent.Transaction
+		transaction := &explorer.Transaction{}
 
-		transaction.ID = channelHeader.TxId
-		transaction.BlockID = block.ID
+		transaction.Id = channelHeader.TxId
+		transaction.BlockId = block.Id
 
 		transactions = append(transactions, transaction)
 
@@ -253,10 +254,10 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 
 		case common.HeaderType_CONFIG:
 
-			var channelConfig ent.ChannelConfig
+			channelConfig := &explorer.ChannelConfig{}
 
-			channelConfig.ChannelID = p.channelID
-			channelConfig.CreatedAt = channelHeader.Timestamp.AsTime()
+			channelConfig.ChannelId = p.channelID
+			channelConfig.CreatedAt = channelHeader.Timestamp
 			channelConfig.Raw = payload.Data
 
 			configEnvelope := &common.ConfigEnvelope{}
@@ -266,8 +267,10 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 				return fmt.Errorf("parse channel config: %w", err)
 			}
 
-			commonConfig := ent.CommonConfig(*configEnvelope.Config)
-			channelConfig.Parsed = &commonConfig
+			channelConfig.Parsed, err = json.Marshal(configEnvelope.Config)
+			if err != nil {
+				return fmt.Errorf("JSON marshal config: %w", err)
+			}
 
 			channelConfigs = append(channelConfigs, channelConfig)
 
@@ -281,7 +284,7 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 					"unmarshal channel header extension: %w", err)
 			}
 
-			var chaincode ent.Chaincode
+			chaincode := &explorer.Chaincode{}
 
 			chaincode.Name = channelHeaderExtension.ChaincodeId.Name
 			chaincode.Version = channelHeaderExtension.ChaincodeId.Version
@@ -372,14 +375,13 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 							fmt.Errorf("parse value: %w", err)
 						}
 
-						states = append(states, ent.State{
+						states = append(states, &explorer.State{
 							Key:           w.Key,
-							TransactionID: transaction.ID,
+							TransactionId: transaction.Id,
 							RawValue:      w.Value,
 							Value:         parsedValue,
 						})
 					}
-
 				}
 			}
 		}
@@ -392,7 +394,7 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 		return fmt.Errorf("begin transaction in storage: %w", err)
 	}
 
-	peer.ID, err = p.storage.AddPeerTx(ctx, tx, peer)
+	peer.Id, err = p.storage.AddPeerTx(ctx, tx, peer)
 	if err != nil {
 		return fmt.Errorf("add peer to storage: %w", err)
 	}
@@ -402,9 +404,9 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 		return fmt.Errorf("add channel to storage: %w", err)
 	}
 
-	err = p.storage.AddPeerChannelTx(ctx, tx, ent.PeerChannel{
-		PeerID:    peer.ID,
-		ChannelID: channel.ID,
+	err = p.storage.AddPeerChannelTx(ctx, tx, &explorer.PeerChannel{
+		PeerId:    peer.Id,
+		ChannelId: channel.Id,
 	})
 	if err != nil {
 		return fmt.Errorf("add peer_channel to storage: %w", err)
@@ -418,27 +420,27 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 	}
 
 	for _, c := range chaincodes {
-		c.ID, err = p.storage.AddChaincodeTx(ctx, tx, c)
+		c.Id, err = p.storage.AddChaincodeTx(ctx, tx, c)
 		if err != nil {
 			return fmt.Errorf("add chaincode to storage: %w", err)
 		}
 
-		err = p.storage.AddChannelChaincodeTx(ctx, tx, ent.ChannelChaincode{
-			ChannelID:   channel.ID,
-			ChaincodeID: c.ID,
+		err = p.storage.AddChannelChaincodeTx(ctx, tx, &explorer.ChannelChaincode{
+			ChannelId:   channel.Id,
+			ChaincodeId: c.Id,
 		})
 		if err != nil {
 			return fmt.Errorf("add channel_chaincode to storage: %w", err)
 		}
 	}
 
-	block.ID, err = p.storage.AddBlockTx(ctx, tx, block)
+	block.Id, err = p.storage.AddBlockTx(ctx, tx, block)
 	if err != nil {
 		return fmt.Errorf("add block to storage: %w", err)
 	}
 
 	for _, t := range transactions {
-		t.BlockID = block.ID
+		t.BlockId = block.Id
 		err = p.storage.AddTransactionTx(ctx, tx, t)
 		if err != nil {
 			return fmt.Errorf("add transaction to storage: %w", err)

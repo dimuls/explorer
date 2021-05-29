@@ -10,13 +10,13 @@ import (
 
 var protobufValueTypes = map[string]map[*regexp.Regexp]reflect.Type{}
 
-func RegisterProtobufValueType(chaincodeName string, matchRegexp string,
+func RegisterProtobufValueType(chaincodeName string, keyMatchRegexp string,
 	format proto.Message) {
 
 	if protobufValueTypes[chaincodeName] == nil {
 		protobufValueTypes[chaincodeName] = map[*regexp.Regexp]reflect.Type{}
 	}
-	protobufValueTypes[chaincodeName][regexp.MustCompile(matchRegexp)] =
+	protobufValueTypes[chaincodeName][regexp.MustCompile(keyMatchRegexp)] =
 		reflect.TypeOf(format)
 }
 
@@ -53,9 +53,9 @@ func unmarshalProtobufValue(chaincodeName, key string, rawValue []byte) (
 
 var jsonValueTypes = map[string][]*regexp.Regexp{}
 
-func RegisterJSONValueType(chaincodeName string, matchRegexp string) {
+func RegisterJSONValueType(chaincodeName string, keyMatchRegexp string) {
 	jsonValueTypes[chaincodeName] = append(jsonValueTypes[chaincodeName],
-		regexp.MustCompile(matchRegexp))
+		regexp.MustCompile(keyMatchRegexp))
 }
 
 func isJSONValue(chaincodeName, key string) bool {

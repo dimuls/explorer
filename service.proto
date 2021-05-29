@@ -1,0 +1,148 @@
+syntax = "proto3";
+
+package ent;
+
+option go_package = "./;explorer";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+import "entity.proto";
+
+service Explorer {
+
+  rpc PostLogin (PostLoginReq) returns (PostLoginRes) {
+    option (google.api.http) = {
+      post: "/login"
+    };
+  }
+
+  rpc GetPeers (GetPeersReq) returns (GetPeersRes) {
+    option (google.api.http) = {
+      get: "/peers"
+    };
+  }
+
+  rpc GetChannels (GetChannelsReq) returns (GetChannelsRes) {
+    option (google.api.http) = {
+      get: "/channels"
+    };
+  }
+
+  rpc GetChannelConfigs (GetChannelConfigsReq) returns (GetChannelConfigsRes) {
+    option (google.api.http) = {
+      get: "/channel_configs"
+    };
+  }
+
+  rpc GetChaincodes (GetChaincodesReq) returns (GetChaincodesRes) {
+    option (google.api.http) = {
+      get: "/channel_configs"
+    };
+  }
+
+  rpc GetBlocks (GetBlocksReq) returns (GetBlocksRes) {
+    option (google.api.http) = {
+      get: "/blocks"
+    };
+  }
+
+  rpc GetTransactions (GetTransactionsReq) returns (GetTransactionsRes) {
+    option (google.api.http) = {
+      get: "/transactions"
+    };
+  }
+
+  rpc GetStates (GetStatesReq) returns (GetStatesRes) {
+    option (google.api.http) = {
+      get: "/states"
+    };
+  }
+
+  rpc GetOldStates (GetOldStatesReq) returns (GetOldStatesRes) {
+    option (google.api.http) = {
+      get: "/old_states"
+    };
+  }
+
+}
+
+message PostLoginReq {
+  string login = 1;
+  string password = 2;
+}
+
+message PostLoginRes {
+  string token = 1;
+}
+
+message GetPeersReq {
+  string channel_id = 1;
+}
+
+message GetPeersRes {
+  repeated Peer peers = 1;
+}
+
+message GetChannelsReq {
+  int64 peer_id = 1;
+}
+
+message GetChannelsRes {
+  repeated Channel channels = 1;
+}
+
+message GetChannelConfigsReq {
+  string channel_id = 1;
+}
+
+message GetChannelConfigsRes {
+  repeated ChannelConfig channel_configs = 1;
+}
+
+message GetChaincodesReq {
+  int64 peer_id = 1;
+  string channel_id = 2;
+}
+
+message GetChaincodesRes {
+  repeated Chaincode chaincodes = 1;
+}
+
+message GetBlocksReq {
+  string channel_id = 1;
+  int64 from_block_id = 3;
+}
+
+message GetBlocksRes {
+  repeated Block blocks = 1;
+}
+
+message GetTransactionsReq {
+  string channel_id = 1;
+  int64 block_id = 2;
+
+  google.protobuf.Timestamp from_created_at = 3;
+}
+
+message GetTransactionsRes {
+  repeated Transaction transactions = 1;
+}
+
+message GetStatesReq {
+  string channel_id = 1;
+  string transaction_id = 2;
+}
+
+message GetStatesRes {
+  repeated State states = 1;
+}
+
+message GetOldStatesReq {
+  string key = 1;
+  int64 from_id = 2;
+}
+
+message GetOldStatesRes {
+  repeated OldState old_states = 1;
+}

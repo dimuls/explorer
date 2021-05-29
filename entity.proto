@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package ent;
+
+option go_package = "./;explorer";
+
+import "google/protobuf/timestamp.proto";
+
+message Peer {
+  // @inject_tag: db:"id"
+  int64 id = 1;
+  // @inject_tag: db:"url"
+  string url = 2;
+}
+
+message Channel {
+  // @inject_tag: db:"id"
+  string id = 1;
+}
+
+message PeerChannel {
+  // @inject_tag: db:"peer_id"
+  int64 peer_id = 1;
+  // @inject_tag: db:"channel_id"
+  string channel_id = 2;
+}
+
+message ChannelConfig {
+  // @inject_tag: db:"id"
+  int64 id = 1;
+  // @inject_tag: db:"channel_id"
+  string channel_id = 2;
+  // @inject_tag: db:"raw"
+  bytes raw = 3;
+  // @inject_tag: db:"parsed"
+  bytes parsed = 4;
+  // @inject_tag: db:"created_at"
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message Chaincode {
+  // @inject_tag: db:"id"
+  int64 id = 1;
+  // @inject_tag: db:"name"
+  string name = 2;
+  // @inject_tag: db:"version"
+  string version = 3;
+}
+
+message ChannelChaincode {
+  // @inject_tag: db:"channel_id"
+  string channel_id = 1;
+  // @inject_tag: db:"chaincode_id"
+  int64 chaincode_id = 2;
+}
+
+message Block {
+  // @inject_tag: db:"id"
+  int64 id = 1;
+  // @inject_tag: db:"channel_id"
+  string channel_id = 2;
+  // @inject_tag: db:"number"
+  int64 number = 3;
+}
+
+message Transaction {
+  // @inject_tag: db:"id"
+  string id = 1;
+  // @inject_tag: db:"block_id"
+  int64 block_id = 2;
+  // @inject_tag: db:"created_at"
+  google.protobuf.Timestamp created_at = 3;
+}
+
+message State {
+  // @inject_tag: db:"key"
+  string key = 1;
+  // @inject_tag: db:"transaction_id"
+  string transaction_id = 2;
+  // @inject_tag: db:"raw_value"
+  bytes raw_value = 3;
+  // @inject_tag: db:"value"
+  bytes value = 4;
+}
+
+message OldState {
+  // @inject_tag: db:"id"
+  int64 id = 1;
+  // @inject_tag: db:"key"
+  string key = 2;
+  // @inject_tag: db:"transaction_id"
+  string transaction_id = 3;
+  // @inject_tag: db:"raw_value"
+  bytes raw_value = 4;
+  // @inject_tag: db:"value"
+  bytes value = 5;
+}
+

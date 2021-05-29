@@ -1,0 +1,581 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "Explorer"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/blocks": {
+      "get": {
+        "operationId": "Explorer_GetBlocks",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/entGetBlocksRes"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "channelId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "fromBlockId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Explorer"
+        ]
+      }
+    },
+    "/channel_configs": {
+      "get": {
+        "operationId": "Explorer_GetChaincodes",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/entGetChaincodesRes"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "peerId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "channelId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Explorer"
+        ]
+      }
+    },
+    "/channels": {
+      "get": {
+        "operationId": "Explorer_GetChannels",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/entGetChannelsRes"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "peerId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Explorer"
+        ]
+      }
+    },
+    "/login": {
+      "post": {
+        "operationId": "Explorer_PostLogin",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/entPostLoginRes"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "Explorer"
+        ]
+      }
+    },
+    "/old_states": {
+      "get": {
+        "operationId": "Explorer_GetOldStates",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/entGetOldStatesRes"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "fromId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Explorer"
+        ]
+      }
+    },
+    "/peers": {
+      "get": {
+        "operationId": "Explorer_GetPeers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/entGetPeersRes"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "channelId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Explorer"
+        ]
+      }
+    },
+    "/states": {
+      "get": {
+        "operationId": "Explorer_GetStates",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/entGetStatesRes"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "channelId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "transactionId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Explorer"
+        ]
+      }
+    },
+    "/transactions": {
+      "get": {
+        "operationId": "Explorer_GetTransactions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/entGetTransactionsRes"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "channelId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "blockId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "fromCreatedAt",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          }
+        ],
+        "tags": [
+          "Explorer"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "entBlock": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64",
+          "title": "@inject_tag: db:\"id\""
+        },
+        "channelId": {
+          "type": "string",
+          "title": "@inject_tag: db:\"channel_id\""
+        },
+        "number": {
+          "type": "string",
+          "format": "int64",
+          "title": "@inject_tag: db:\"number\""
+        }
+      }
+    },
+    "entChaincode": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64",
+          "title": "@inject_tag: db:\"id\""
+        },
+        "name": {
+          "type": "string",
+          "title": "@inject_tag: db:\"name\""
+        },
+        "version": {
+          "type": "string",
+          "title": "@inject_tag: db:\"version\""
+        }
+      }
+    },
+    "entChannel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "@inject_tag: db:\"id\""
+        }
+      }
+    },
+    "entChannelConfig": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64",
+          "title": "@inject_tag: db:\"id\""
+        },
+        "channelId": {
+          "type": "string",
+          "title": "@inject_tag: db:\"channel_id\""
+        },
+        "raw": {
+          "type": "string",
+          "format": "byte",
+          "title": "@inject_tag: db:\"raw\""
+        },
+        "parsed": {
+          "type": "string",
+          "format": "byte",
+          "title": "@inject_tag: db:\"parsed\""
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "@inject_tag: db:\"created_at\""
+        }
+      }
+    },
+    "entGetBlocksRes": {
+      "type": "object",
+      "properties": {
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/entBlock"
+          }
+        }
+      }
+    },
+    "entGetChaincodesRes": {
+      "type": "object",
+      "properties": {
+        "chaincodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/entChaincode"
+          }
+        }
+      }
+    },
+    "entGetChannelConfigsRes": {
+      "type": "object",
+      "properties": {
+        "channelConfigs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/entChannelConfig"
+          }
+        }
+      }
+    },
+    "entGetChannelsRes": {
+      "type": "object",
+      "properties": {
+        "channels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/entChannel"
+          }
+        }
+      }
+    },
+    "entGetOldStatesRes": {
+      "type": "object",
+      "properties": {
+        "oldStates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/entOldState"
+          }
+        }
+      }
+    },
+    "entGetPeersRes": {
+      "type": "object",
+      "properties": {
+        "peers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/entPeer"
+          }
+        }
+      }
+    },
+    "entGetStatesRes": {
+      "type": "object",
+      "properties": {
+        "states": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/entState"
+          }
+        }
+      }
+    },
+    "entGetTransactionsRes": {
+      "type": "object",
+      "properties": {
+        "transactions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/entTransaction"
+          }
+        }
+      }
+    },
+    "entOldState": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64",
+          "title": "@inject_tag: db:\"id\""
+        },
+        "key": {
+          "type": "string",
+          "title": "@inject_tag: db:\"key\""
+        },
+        "transactionId": {
+          "type": "string",
+          "title": "@inject_tag: db:\"transaction_id\""
+        },
+        "rawValue": {
+          "type": "string",
+          "format": "byte",
+          "title": "@inject_tag: db:\"raw_value\""
+        },
+        "value": {
+          "type": "string",
+          "format": "byte",
+          "title": "@inject_tag: db:\"value\""
+        }
+      }
+    },
+    "entPeer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64",
+          "title": "@inject_tag: db:\"id\""
+        },
+        "url": {
+          "type": "string",
+          "title": "@inject_tag: db:\"url\""
+        }
+      }
+    },
+    "entPostLoginRes": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
+    },
+    "entState": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "title": "@inject_tag: db:\"key\""
+        },
+        "transactionId": {
+          "type": "string",
+          "title": "@inject_tag: db:\"transaction_id\""
+        },
+        "rawValue": {
+          "type": "string",
+          "format": "byte",
+          "title": "@inject_tag: db:\"raw_value\""
+        },
+        "value": {
+          "type": "string",
+          "format": "byte",
+          "title": "@inject_tag: db:\"value\""
+        }
+      }
+    },
+    "entTransaction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "@inject_tag: db:\"id\""
+        },
+        "blockId": {
+          "type": "string",
+          "format": "int64",
+          "title": "@inject_tag: db:\"block_id\""
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "@inject_tag: db:\"created_at\""
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}
