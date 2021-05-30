@@ -15,7 +15,7 @@ func (e *Explorer) LastBlockID(ctx context.Context) (lastID int64, err error) {
 	found, err := e.db.
 		From("block").
 		Select(goqu.COALESCE(goqu.MAX("id"), 0)).
-		Executor().ScanValContext(ctx, &lastID)
+		ScanValContext(ctx, &lastID)
 	if err != nil {
 		return
 	}
@@ -25,8 +25,70 @@ func (e *Explorer) LastBlockID(ctx context.Context) (lastID int64, err error) {
 	return
 }
 
+const (
+	postgresDialect = "postgres"
+
+	peer             = "peer"
+	channel          = "channel"
+	peerChannel      = "peer_channel"
+	channelConfig    = "channel_config"
+	chaincode        = "chaincode"
+	channelChaincode = "channel_chaincode"
+	block            = "block"
+	transaction      = "transaction"
+	state            = "state"
+	oldState         = "old_state"
+)
+
+func (e *Explorer) BeginTx(ctx context.Context) (*sql.Tx, error) {
+	return e.db.Db.BeginTx(ctx, nil)
+}
+
+func (e *Explorer) AddPeerTx(ctx context.Context, tx *sql.Tx,
+	p *explorer.Peer) (id int64, err error) {
+
+	defer func() {
+		if err != nil {
+			err2 := tx.Rollback()
+			if err2 != nil {
+				e.log.WithError(err2).
+					Error("failed to rollback transaction")
+			}
+		}
+	}()
+
+	txx := goqu.NewTx(postgresDialect, tx)
+
+	exists, err := txx.Select("id").
+		From(peer).
+		Where(goqu.Ex{"url": p.Url}).
+		ScanValContext(ctx, &id)
+	if err != nil {
+		err2 := tx.Rollback()
+		if err2 != nil {
+			e.log.WithError(err2).Error("failed to rollback transaction")
+		}
+		return 0, fmt.Errorf("get peer from DB: %w", err)
+	}
+	if exists {
+		return id, nil
+	}
+
+	_, err = txx.
+		Insert(peer).
+		Rows(p).
+		Returning("id").
+		Executor().ScanValContext(ctx, &id)
+	if err != nil {
+		return 0, fmt.Errorf("add peer to DB: %w", err)
+	}
+
+	return id, nil
+}
+
 func (e *Explorer) AddChannelTx(ctx context.Context, tx *sql.Tx,
 	c *explorer.Channel) error {
+
 	_, err := goqu.NewTx(postgresDialect, tx).
 		Insert(channel).
 		Rows(c).
@@ -38,6 +100,7 @@ func (e *Explorer) AddChannelTx(ctx context.Context, tx *sql.Tx,
 			e.log.WithError(err2).Error("failed to rollback transaction")
 		}
 	}
+
 	return err
 }
 
@@ -50,7 +113,7 @@ func (e *Explorer) AddChannelConfigTx(ctx context.Context, tx *sql.Tx,
 			"channel_id": cc.ChannelId,
 			"raw":        hex.EncodeToString(cc.Raw),
 			"parsed":     cc.Parsed,
-			"created_at": cc.CreatedAt}).
+			"created_at": cc.CreatedAt.AsTime()}).
 		Executor().ExecContext(ctx)
 	if err != nil {
 		err2 := tx.Rollback()
@@ -63,6 +126,7 @@ func (e *Explorer) AddChannelConfigTx(ctx context.Context, tx *sql.Tx,
 
 func (e *Explorer) AddPeerChannelTx(ctx context.Context, tx *sql.Tx,
 	c *explorer.PeerChannel) error {
+
 	_, err := goqu.NewTx(postgresDialect, tx).
 		Insert(peerChannel).
 		Rows(c).
@@ -74,6 +138,7 @@ func (e *Explorer) AddPeerChannelTx(ctx context.Context, tx *sql.Tx,
 			e.log.WithError(err2).Error("failed to rollback transaction")
 		}
 	}
+
 	return err
 }
 
@@ -90,15 +155,13 @@ func (e *Explorer) AddChaincodeTx(ctx context.Context, tx *sql.Tx,
 		}
 	}()
 
-	var cc explorer.Chaincode
-
 	txx := goqu.NewTx(postgresDialect, tx)
 
 	exists, err := txx.
-		Select().
+		Select("id").
 		From(chaincode).
 		Where(goqu.Ex{"name": c.Name, "version": c.Version}).
-		ScanStructContext(ctx, &cc)
+		ScanValContext(ctx, &id)
 	if err != nil {
 		err2 := tx.Rollback()
 		if err2 != nil {
@@ -107,7 +170,7 @@ func (e *Explorer) AddChaincodeTx(ctx context.Context, tx *sql.Tx,
 		return 0, fmt.Errorf("get peer from DB: %w", err)
 	}
 	if exists {
-		return cc.Id, nil
+		return id, nil
 	}
 
 	_, err = txx.
@@ -118,11 +181,13 @@ func (e *Explorer) AddChaincodeTx(ctx context.Context, tx *sql.Tx,
 	if err != nil {
 		return 0, fmt.Errorf("add chaincode to DB: %w", err)
 	}
-	return
+
+	return id, nil
 }
 
 func (e *Explorer) AddChannelChaincodeTx(ctx context.Context, tx *sql.Tx,
 	cc *explorer.ChannelChaincode) error {
+
 	_, err := goqu.NewTx(postgresDialect, tx).
 		Insert(channelChaincode).
 		Rows(cc).
@@ -134,6 +199,7 @@ func (e *Explorer) AddChannelChaincodeTx(ctx context.Context, tx *sql.Tx,
 			e.log.WithError(err2).Error("failed to rollback transaction")
 		}
 	}
+
 	return err
 }
 
@@ -150,15 +216,13 @@ func (e *Explorer) AddBlockTx(ctx context.Context, tx *sql.Tx,
 		}
 	}()
 
-	var bb explorer.Block
-
 	txx := goqu.NewTx(postgresDialect, tx)
 
 	exists, err := txx.
-		Select().
+		Select("id").
 		From(block).
 		Where(goqu.Ex{"channel_id": b.ChannelId, "number": b.Number}).
-		ScanStructContext(ctx, &bb)
+		Executor().ScanValContext(ctx, &id)
 	if err != nil {
 		err2 := tx.Rollback()
 		if err2 != nil {
@@ -167,8 +231,10 @@ func (e *Explorer) AddBlockTx(ctx context.Context, tx *sql.Tx,
 		return 0, fmt.Errorf("get peer from DB: %w", err)
 	}
 	if exists {
-		return bb.Id, nil
+		return id, nil
 	}
+
+	fmt.Println(b)
 
 	_, err = txx.
 		Insert(block).
@@ -178,7 +244,8 @@ func (e *Explorer) AddBlockTx(ctx context.Context, tx *sql.Tx,
 	if err != nil {
 		return 0, fmt.Errorf("add peer to DB: %w", err)
 	}
-	return
+
+	return id, nil
 }
 
 func (e *Explorer) AddTransactionTx(ctx context.Context, tx *sql.Tx,
@@ -190,7 +257,7 @@ func (e *Explorer) AddTransactionTx(ctx context.Context, tx *sql.Tx,
 		Rows(goqu.Record{
 			"id":         t.Id,
 			"block_id":   t.BlockId,
-			"created_at": t.CreatedAt,
+			"created_at": t.CreatedAt.AsTime(),
 		}).
 		OnConflict(goqu.DoNothing()).
 		Executor().ExecContext(ctx)
@@ -200,6 +267,7 @@ func (e *Explorer) AddTransactionTx(ctx context.Context, tx *sql.Tx,
 			e.log.WithError(err2).Error("failed to rollback transaction")
 		}
 	}
+
 	return err
 }
 
@@ -223,7 +291,7 @@ func (e *Explorer) AddStateTx(ctx context.Context, tx *sql.Tx,
 	exists, err := txx.Select().
 		From(state).
 		Where(goqu.Ex{"key": as.Key}).
-		Executor().ScanStructContext(ctx, &os)
+		ScanStructContext(ctx, &os)
 	if err != nil {
 		return fmt.Errorf("get actual state: %w", err)
 	}

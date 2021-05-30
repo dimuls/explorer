@@ -7,7 +7,7 @@ option go_package = "./;explorer";
 import "google/protobuf/timestamp.proto";
 
 message Peer {
-  // @inject_tag: db:"id"
+  // @inject_tag: db:"id" goqu:"skipinsert"
   int64 id = 1;
   // @inject_tag: db:"url"
   string url = 2;
@@ -26,7 +26,7 @@ message PeerChannel {
 }
 
 message ChannelConfig {
-  // @inject_tag: db:"id"
+  // @inject_tag: db:"id" goqu:"skipinsert"
   int64 id = 1;
   // @inject_tag: db:"channel_id"
   string channel_id = 2;
@@ -39,7 +39,7 @@ message ChannelConfig {
 }
 
 message Chaincode {
-  // @inject_tag: db:"id"
+  // @inject_tag: db:"id" goqu:"skipinsert"
   int64 id = 1;
   // @inject_tag: db:"name"
   string name = 2;
@@ -55,7 +55,7 @@ message ChannelChaincode {
 }
 
 message Block {
-  // @inject_tag: db:"id"
+  // @inject_tag: db:"id" goqu:"skipinsert"
   int64 id = 1;
   // @inject_tag: db:"channel_id"
   string channel_id = 2;
@@ -84,7 +84,7 @@ message State {
 }
 
 message OldState {
-  // @inject_tag: db:"id"
+  // @inject_tag: db:"id" goqu:"skipinsert"
   int64 id = 1;
   // @inject_tag: db:"key"
   string key = 2;

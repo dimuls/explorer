@@ -9,20 +9,19 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/dimuls/fabric-sdk-go/pkg/client/event"
+	"github.com/dimuls/fabric-sdk-go/pkg/common/providers/fab"
+	"github.com/dimuls/fabric-sdk-go/pkg/core/config"
+	"github.com/dimuls/fabric-sdk-go/pkg/fab/events/deliverclient/seek"
+	"github.com/dimuls/fabric-sdk-go/pkg/fabsdk"
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/ledger/rwset"
 	"github.com/hyperledger/fabric-protos-go/ledger/rwset/kvrwset"
 	fabricPeer "github.com/hyperledger/fabric-protos-go/peer"
-	"github.com/hyperledger/fabric-sdk-go/pkg/client/event"
-	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
-	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fab/events/deliverclient/seek"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/sirupsen/logrus"
 
 	"explorer"
-	"explorer/pg"
 )
 
 type ProcessorConfig struct {
@@ -35,7 +34,7 @@ type ProcessorConfig struct {
 
 type Processor struct {
 	channelID string
-	storage   *pg.Explorer
+	storage   Storage
 	log       *logrus.Entry
 	wg        sync.WaitGroup
 	close     chan struct{}
@@ -50,7 +49,7 @@ func init() {
 	spew.Config.DisableMethods = true
 }
 
-func NewProcessor(c ProcessorConfig, s *pg.Explorer) (p *Processor, err error) {
+func NewProcessor(c ProcessorConfig, s Storage) (p *Processor, err error) {
 
 	log := logrus.WithFields(logrus.Fields{
 		"subsystem":  "processor",

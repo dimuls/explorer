@@ -2,4 +2,5 @@
 config.yaml
 config-fabric.yaml
 *.pb.go
+*.swagger.json
 local

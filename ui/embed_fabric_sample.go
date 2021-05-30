@@ -1,4 +1,4 @@
-//+build fabric-sample
+//+build fabric_sample
 
 package ui
 
@@ -6,5 +6,7 @@ import (
 	"embed"
 )
 
-//go:embed dist-basic
+const Prefix = "dist_fabric_sample"
+
+//go:embed dist_fabric_sample
 var FS embed.FS

@@ -2,11 +2,18 @@ package pg
 
 import (
 	"context"
-	"explorer"
 
 	"google.golang.org/grpc"
 )
 
-func (e *Explorer) PostLogin(ctx context.Context, in *explorer.PostLoginReq, opts ...grpc.CallOption) (*explorer.PostLoginRes, error) {
-	return nil, nil
+func (e *Explorer) UnaryAuthInterceptor(
+	ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (interface{}, error) {
+
+	// TODO
+
+	return handler(ctx, req)
 }

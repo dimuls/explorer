@@ -3,16 +3,22 @@ package pg
 import (
 	"context"
 	"explorer"
+	"fmt"
+	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/doug-martin/goqu/v9"
-
-	"google.golang.org/grpc"
 )
 
 const defaultLimit = 100
 
-func (e *Explorer) GetPeers(ctx context.Context,
-	req *explorer.GetPeersReq, opts ...grpc.CallOption) (
+func (e *Explorer) PostLogin(ctx context.Context, in *explorer.PostLoginReq) (
+	*explorer.PostLoginRes, error) {
+	return nil, fmt.Errorf("TODO")
+}
+
+func (e *Explorer) GetPeers(ctx context.Context, req *explorer.GetPeersReq) (
 	*explorer.GetPeersRes, error) {
 
 	q := e.db.From(goqu.I(peer).As("p")).
@@ -38,7 +44,7 @@ func (e *Explorer) GetPeers(ctx context.Context,
 }
 
 func (e *Explorer) GetChannels(ctx context.Context,
-	req *explorer.GetChannelsReq, opts ...grpc.CallOption) (
+	req *explorer.GetChannelsReq) (
 	*explorer.GetChannelsRes, error) {
 
 	q := e.db.From(goqu.I(channel).As("c")).
@@ -65,11 +71,12 @@ func (e *Explorer) GetChannels(ctx context.Context,
 }
 
 func (e *Explorer) GetChannelConfigs(ctx context.Context,
-	req *explorer.GetChannelConfigsReq, opts ...grpc.CallOption) (
+	req *explorer.GetChannelConfigsReq) (
 	*explorer.GetChannelConfigsRes, error) {
 
 	q := e.db.From(goqu.I(channelConfig).As("cc")).
-		Select(goqu.I("cc").All)
+		Select("cc.id", "cc.channel_id", "cc.raw", "cc.parsed",
+			"cc.created_at")
 
 	if req.ChannelId != "" {
 		q = q.Where(goqu.Ex{"channel_id": req.ChannelId})
@@ -79,8 +86,22 @@ func (e *Explorer) GetChannelConfigs(ctx context.Context,
 
 	var ccs []*explorer.ChannelConfig
 
-	err := q.Executor().ScanStructsContext(ctx, &ccs)
+	rows, err := q.Executor().QueryContext(ctx)
 	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		cc := &explorer.ChannelConfig{}
+		var createdAt time.Time
+		err = rows.Scan(&cc.Id, &cc.ChannelId, &cc.Raw, &cc.Parsed, &createdAt)
+		if err != nil {
+			return nil, err
+		}
+		cc.CreatedAt = timestamppb.New(createdAt)
+		ccs = append(ccs, cc)
+	}
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
@@ -90,7 +111,7 @@ func (e *Explorer) GetChannelConfigs(ctx context.Context,
 }
 
 func (e *Explorer) GetChaincodes(ctx context.Context,
-	req *explorer.GetChaincodesReq, opts ...grpc.CallOption) (
+	req *explorer.GetChaincodesReq) (
 	*explorer.GetChaincodesRes, error) {
 
 	q := e.db.From(goqu.I(chaincode).As("c")).
@@ -124,8 +145,7 @@ type blockLoader struct {
 	BlockID int64 `json:"block_id"`
 }
 
-func (e *Explorer) GetBlocks(ctx context.Context,
-	req *explorer.GetBlocksReq, opts ...grpc.CallOption) (
+func (e *Explorer) GetBlocks(ctx context.Context, req *explorer.GetBlocksReq) (
 	*explorer.GetBlocksRes, error) {
 
 	q := e.db.From(goqu.I(block).As("b")).
@@ -159,11 +179,11 @@ func (e *Explorer) GetBlocks(ctx context.Context,
 }
 
 func (e *Explorer) GetTransactions(ctx context.Context,
-	req *explorer.GetTransactionsReq, opts ...grpc.CallOption) (
+	req *explorer.GetTransactionsReq) (
 	*explorer.GetTransactionsRes, error) {
 
 	q := e.db.From(goqu.I(transaction).As("t")).
-		Select(goqu.I("t").All())
+		Select("id", "block_id", "created_at")
 
 	where := goqu.Ex{}
 
@@ -187,8 +207,22 @@ func (e *Explorer) GetTransactions(ctx context.Context,
 
 	var ts []*explorer.Transaction
 
-	err := q.Executor().ScanStructsContext(ctx, &ts)
+	rows, err := q.Executor().QueryContext(ctx)
 	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		t := &explorer.Transaction{}
+		var createdAt time.Time
+		err = rows.Scan(&t.Id, &t.BlockId, &createdAt)
+		if err != nil {
+			return nil, err
+		}
+		t.CreatedAt = timestamppb.New(createdAt)
+		ts = append(ts, t)
+	}
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
@@ -197,8 +231,7 @@ func (e *Explorer) GetTransactions(ctx context.Context,
 	}, nil
 }
 
-func (e *Explorer) GetStates(ctx context.Context,
-	req *explorer.GetStatesReq, opts ...grpc.CallOption) (
+func (e *Explorer) GetStates(ctx context.Context, req *explorer.GetStatesReq) (
 	*explorer.GetStatesRes, error) {
 
 	q := e.db.From(goqu.I(state).As("s")).
@@ -234,7 +267,7 @@ func (e *Explorer) GetStates(ctx context.Context,
 }
 
 func (e *Explorer) GetOldStates(ctx context.Context,
-	req *explorer.GetOldStatesReq, opts ...grpc.CallOption) (
+	req *explorer.GetOldStatesReq) (
 	*explorer.GetOldStatesRes, error) {
 
 	q := e.db.From(state).Select()
