@@ -5,7 +5,6 @@ package main
 import (
 	"explorer"
 	"explorer/hf"
-	_ "explorer/mod/fabric_sample"
 	"explorer/pg"
 )
 
