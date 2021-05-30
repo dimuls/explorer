@@ -13,58 +13,63 @@ service Explorer {
 
   rpc PostLogin (PostLoginReq) returns (PostLoginRes) {
     option (google.api.http) = {
-      post: "/login"
+      post: "/api/login"
     };
   }
 
   rpc GetPeers (GetPeersReq) returns (GetPeersRes) {
     option (google.api.http) = {
-      get: "/peers"
+      get: "/api/peers"
     };
   }
 
   rpc GetChannels (GetChannelsReq) returns (GetChannelsRes) {
     option (google.api.http) = {
-      get: "/channels"
+      get: "/api/channels"
     };
   }
 
   rpc GetChannelConfigs (GetChannelConfigsReq) returns (GetChannelConfigsRes) {
     option (google.api.http) = {
-      get: "/channel_configs"
+      get: "/api/channel_configs"
     };
   }
 
   rpc GetChaincodes (GetChaincodesReq) returns (GetChaincodesRes) {
     option (google.api.http) = {
-      get: "/channel_configs"
+      get: "/api/chaincodes"
     };
   }
 
   rpc GetBlocks (GetBlocksReq) returns (GetBlocksRes) {
     option (google.api.http) = {
-      get: "/blocks"
+      get: "/api/blocks"
     };
   }
 
   rpc GetTransactions (GetTransactionsReq) returns (GetTransactionsRes) {
     option (google.api.http) = {
-      get: "/transactions"
+      get: "/api/transactions"
     };
   }
 
   rpc GetStates (GetStatesReq) returns (GetStatesRes) {
     option (google.api.http) = {
-      get: "/states"
+      get: "/api/states"
     };
   }
 
   rpc GetOldStates (GetOldStatesReq) returns (GetOldStatesRes) {
     option (google.api.http) = {
-      get: "/old_states"
+      get: "/api/old_states"
     };
   }
 
+  rpc GetQuery (GetQueryReq) returns (GetQueryRes)  {
+    option(google.api.http) = {
+      get: "/api/query"
+    };
+  }
 }
 
 message PostLoginReq {
@@ -111,7 +116,7 @@ message GetChaincodesRes {
 
 message GetBlocksReq {
   string channel_id = 1;
-  int64 from_block_id = 3;
+  int64 from_id = 3;
 }
 
 message GetBlocksRes {
@@ -145,4 +150,13 @@ message GetOldStatesReq {
 
 message GetOldStatesRes {
   repeated OldState old_states = 1;
+}
+
+message GetQueryReq {
+  string name = 1;
+  string args = 2;
+}
+
+message GetQueryRes {
+  string data = 3;
 }

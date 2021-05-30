@@ -157,8 +157,8 @@ func (e *Explorer) GetBlocks(ctx context.Context, req *explorer.GetBlocksReq) (
 		where["b.channel_id"] = req.ChannelId
 	}
 
-	if req.FromBlockId != 0 {
-		where["b.id"] = goqu.Op{"lt": req.FromBlockId}
+	if req.FromId != 0 {
+		where["b.id"] = goqu.Op{"lt": req.FromId}
 	}
 
 	q = q.Where(where).

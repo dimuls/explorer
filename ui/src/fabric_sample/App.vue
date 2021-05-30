@@ -33,6 +33,6 @@ html {
 
 <script>
 export default {
-  name: "FabricSampleApp",
+  name: "App",
 };
 </script>

@@ -75,12 +75,14 @@ message Transaction {
 message State {
   // @inject_tag: db:"key"
   string key = 1;
+  // @inject_tag: db:"type"
+  string type = 2;
   // @inject_tag: db:"transaction_id"
-  string transaction_id = 2;
+  string transaction_id = 3;
   // @inject_tag: db:"raw_value"
-  bytes raw_value = 3;
+  bytes raw_value = 4;
   // @inject_tag: db:"value"
-  bytes value = 4;
+  bytes value = 5;
 }
 
 message OldState {

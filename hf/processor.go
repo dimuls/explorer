@@ -369,13 +369,14 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 					}
 
 					for _, w := range kvRWSet.Writes {
-						parsedValue, err := parseValue(chaincode.Name, w.Key, w.Value)
+						stateType, parsedValue, err := parseValue(chaincode.Name, w.Key, w.Value)
 						if err != nil {
 							fmt.Errorf("parse value: %w", err)
 						}
 
 						states = append(states, &explorer.State{
 							Key:           w.Key,
+							Type:          stateType,
 							TransactionId: transaction.Id,
 							RawValue:      w.Value,
 							Value:         parsedValue,

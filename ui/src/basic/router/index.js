@@ -1,13 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
-import BasicApp from "../BasicApp";
 import Peers from "../views/Peers";
 import Channels from "../views/Channels";
 import Chaincodes from "../views/Chaincodes";
 import Blocks from "../views/Blocks";
 import Transactions from "../views/Transactions";
 import States from "../views/States";
-
-export const app = BasicApp;
 
 export const routes = [
   {
@@ -47,7 +44,7 @@ export const routes = [
   },
 ];
 
-export const router = createRouter({
+export default createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
 });

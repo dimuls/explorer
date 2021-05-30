@@ -50,6 +50,7 @@ create table transaction (
 create table state (
     key text primary key,
     transaction_id char(65) not null references transaction(id),
+    type text not null,
     raw_value bytea not null,
     value jsonb
 );
@@ -58,6 +59,7 @@ create table old_state (
     id bigserial primary key,
     transaction_id char(65) not null references transaction(id),
     key text not null,
+    type text not null,
     raw_value bytea not null,
     value jsonb
 );

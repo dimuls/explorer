@@ -299,6 +299,7 @@ func (e *Explorer) AddStateTx(ctx context.Context, tx *sql.Tx,
 	ar := goqu.Record{
 		"key":            as.Key,
 		"transaction_id": as.TransactionId,
+		"type":           as.Type,
 		"raw_value":      hex.EncodeToString(as.RawValue),
 	}
 	if len(as.Value) > 0 {
@@ -308,6 +309,7 @@ func (e *Explorer) AddStateTx(ctx context.Context, tx *sql.Tx,
 	or := goqu.Record{
 		"key":            os.Key,
 		"transaction_id": os.TransactionId,
+		"type":           as.Type,
 		"raw_value":      hex.EncodeToString(as.RawValue),
 	}
 	if len(as.Value) > 0 {

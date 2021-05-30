@@ -1,9 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { routes as basicRoutes } from "./basic";
-import FabricSampleApp from "../FabricSampleApp";
+import { routes as basicRoutes } from "@/basic/router";
 import Assets from "../views/Assets.vue";
-
-export const app = FabricSampleApp;
 
 export const routes = [
   { path: "/", name: "index", redirect: "assets" },
@@ -11,7 +8,7 @@ export const routes = [
   ...basicRoutes.filter((r) => r.name !== "index"),
 ];
 
-export const router = createRouter({
+export default createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
 });

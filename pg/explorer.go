@@ -221,14 +221,14 @@ func (e *Explorer) Run() (err error) {
 			w.Write(content)
 		})
 
-	httpServer := &http.Server{
+	e.httpServer = &http.Server{
 		Addr:    e.config.Listen.HTTP,
 		Handler: httpRouter,
 	}
 
 	go func() {
 		for {
-			err := httpServer.ListenAndServe()
+			err := e.httpServer.ListenAndServe()
 			if err != nil {
 				if err == http.ErrServerClosed {
 					break

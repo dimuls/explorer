@@ -8,76 +8,111 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var protobufValueTypes = map[string]map[*regexp.Regexp]reflect.Type{}
+type protobufvalueType struct {
+	StateType string
+	Format    reflect.Type
+}
+
+var protobufValueTypes = map[string]map[*regexp.Regexp]protobufvalueType{}
 
 func RegisterProtobufValueType(chaincodeName string, keyMatchRegexp string,
-	format proto.Message) {
+	stateType string, format proto.Message) {
 
 	if protobufValueTypes[chaincodeName] == nil {
-		protobufValueTypes[chaincodeName] = map[*regexp.Regexp]reflect.Type{}
+		protobufValueTypes[chaincodeName] = map[*regexp.Regexp]protobufvalueType{}
 	}
+
 	protobufValueTypes[chaincodeName][regexp.MustCompile(keyMatchRegexp)] =
-		reflect.TypeOf(format)
+		protobufvalueType{
+			StateType: stateType,
+			Format:    reflect.TypeOf(format),
+		}
 }
 
 func unmarshalProtobufValue(chaincodeName, key string, rawValue []byte) (
-	interface{}, error) {
+	string, interface{}, error) {
 
 	ccValueTypes, exists := protobufValueTypes[chaincodeName]
 	if !exists {
-		return nil, nil
+		return "", nil, nil
 	}
 
-	var format reflect.Type
+	var (
+		stateType string
+		format    reflect.Type
+	)
 
 	for m, f := range ccValueTypes {
 		if m.MatchString(key) {
-			format = f
+			stateType = f.StateType
+			format = f.Format
 			break
 		}
 	}
 
 	if format == nil {
-		return nil, nil
+		return "", nil, nil
 	}
 
 	value := reflect.New(format)
 
 	err := proto.Unmarshal(rawValue, value.Interface().(proto.Message))
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
-	return value.Interface(), nil
+	return stateType, value.Interface(), nil
 }
 
-var jsonValueTypes = map[string][]*regexp.Regexp{}
+type jsonValueType struct {
+	regexp    *regexp.Regexp
+	stateType string
+}
 
-func RegisterJSONValueType(chaincodeName string, keyMatchRegexp string) {
+var jsonValueTypes = map[string][]jsonValueType{}
+
+func RegisterJSONValueType(chaincodeName string, keyMatchRegexp string,
+	stateType string) {
+
 	jsonValueTypes[chaincodeName] = append(jsonValueTypes[chaincodeName],
-		regexp.MustCompile(keyMatchRegexp))
+		jsonValueType{
+			regexp:    regexp.MustCompile(keyMatchRegexp),
+			stateType: stateType,
+		})
 }
 
-func isJSONValue(chaincodeName, key string) bool {
+func isJSONValue(chaincodeName, key string) (string, bool) {
+
 	ccValueTypes, exists := jsonValueTypes[chaincodeName]
 	if !exists {
-		return false
+		return "", false
 	}
-	for _, m := range ccValueTypes {
-		if m.MatchString(key) {
-			return true
+
+	for _, vt := range ccValueTypes {
+		if vt.regexp.MatchString(key) {
+			return vt.stateType, true
 		}
 	}
-	return false
+
+	return "", false
 }
 
-func parseValue(chaincodeName, key string, rawValue []byte) (json.RawMessage, error) {
-	if isJSONValue(chaincodeName, key) {
-		return rawValue, nil
+func parseValue(chaincodeName, key string, rawValue []byte) (string, json.RawMessage, error) {
+
+	stateType, isJSON := isJSONValue(chaincodeName, key)
+	if isJSON {
+		return stateType, rawValue, nil
 	}
-	v, err := unmarshalProtobufValue(chaincodeName, key, rawValue)
+
+	stateType, v, err := unmarshalProtobufValue(chaincodeName, key, rawValue)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
-	return json.Marshal(v)
+
+	vJSON, err := json.Marshal(v)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return stateType, vJSON, nil
 }

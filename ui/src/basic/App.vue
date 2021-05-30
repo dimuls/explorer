@@ -28,6 +28,6 @@ html {
 
 <script>
 export default {
-  name: "BasicApp",
+  name: "App",
 };
 </script>
