@@ -1,16 +1,16 @@
-//+build fabric_sample
-
 package main
 
 import (
 	"explorer"
+	"explorer/example/fabric-sample/ui"
 	"explorer/hf"
 	"explorer/pg"
 )
 
-func run() {
-
+func main() {
 	hf.RegisterJSONValueType("basic", "^asset", "asset")
+
+	pg.RegisterUI(ui.FS)
 
 	pg.RegisterQuery(pg.Query{
 		Name: "assets_by_owner_and_size",

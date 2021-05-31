@@ -16,8 +16,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/rs/cors"
-
 	"github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/golang-migrate/migrate/v4"
@@ -27,6 +25,7 @@ import (
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/lib/pq"
+	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
@@ -195,7 +194,7 @@ func (e *Explorer) Run() (err error) {
 			w.Write(swaggerJSON)
 		})
 
-	indexFile, err := ui.FS.Open(path.Join(ui.Prefix, "index.html"))
+	indexFile, err := uiFS.Open(path.Join(ui.Prefix, "index.html"))
 	if err != nil {
 		logrus.WithError(err).Error("failed to open index file")
 		return
@@ -213,7 +212,7 @@ func (e *Explorer) Run() (err error) {
 
 			staticPath := path.Join(ui.Prefix, r.URL.Path)
 
-			content, err := ui.FS.ReadFile(staticPath)
+			content, err := uiFS.ReadFile(staticPath)
 			if err != nil {
 				w.Write(indexHTML)
 				return

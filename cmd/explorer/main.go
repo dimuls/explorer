@@ -1,5 +1,7 @@
 package main
 
+import "explorer/pg"
+
 func main() {
-	run()
+	pg.RunExplorer()
 }
