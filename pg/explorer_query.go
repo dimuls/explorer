@@ -60,8 +60,6 @@ func RunQuery(ctx context.Context, db *goqu.Database, queryName string,
 
 	dest := reflect.New(reflect.SliceOf(q.DestElemType))
 
-	fmt.Println(args)
-
 	err := db.ScanStructsContext(ctx, dest.Interface(), q.Body, args...)
 	if err != nil {
 		return "", err

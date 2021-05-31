@@ -14,6 +14,7 @@ require (
 	github.com/hyperledger/fabric-protos-go v0.0.0-20210528200356-82833ecdac31
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/lib/pq v1.10.2
+	github.com/rs/cors v1.7.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	google.golang.org/genproto v0.0.0-20210524171403-669157292da3
 	google.golang.org/grpc v1.38.0

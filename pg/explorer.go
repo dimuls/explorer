@@ -16,6 +16,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/rs/cors"
+
 	"github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/golang-migrate/migrate/v4"
@@ -174,7 +176,8 @@ func (e *Explorer) Run() (err error) {
 
 	httpRouter := mux.NewRouter()
 
-	httpRouter.PathPrefix("/api/").Handler(explorerAPIMux)
+	httpRouter.PathPrefix("/api/").Handler(
+		cors.Default().Handler(explorerAPIMux))
 
 	swaggerFile, err := explorer.FS.Open(explorer.SwaggerFile)
 	if err != nil {

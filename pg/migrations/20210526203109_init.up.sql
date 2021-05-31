@@ -1,3 +1,6 @@
+create extension if not exists pg_trgm;
+alter database explorer set pg_trgm.similarity_threshold = 0.3;
+
 create table peer (
     id bigserial primary key,
     url text not null unique

@@ -22,18 +22,19 @@ func (e *Explorer) GetPeers(ctx context.Context, req *explorer.GetPeersReq) (
 	*explorer.GetPeersRes, error) {
 
 	q := e.db.From(goqu.I(peer).As("p")).
-		Select(goqu.I("p").All())
+		Select(goqu.I("p.id").As("id"),
+			goqu.I("p.url").As("url")).
+		Order(goqu.I("p.id").Asc())
 
 	if req.ChannelId != "" {
 		q = q.Join(goqu.I(peerChannel).As("pc"),
-			goqu.On(goqu.Ex{"p.id": goqu.I("pc.peer_id")}))
+			goqu.On(goqu.Ex{"p.id": goqu.I("pc.peer_id")})).
+			Where(goqu.Ex{"pc.channel_id": req.ChannelId})
 	}
-
-	q = q.OrderAppend(goqu.I("id").Asc())
 
 	var ps []*explorer.Peer
 
-	err := q.Executor().ScanStructsContext(ctx, &ps)
+	err := q.ScanStructsContext(ctx, &ps)
 	if err != nil {
 		return nil, err
 	}
