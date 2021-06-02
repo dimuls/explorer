@@ -120,14 +120,14 @@ func (e *Explorer) Run() (err error) {
 
 	for _, pc := range e.config.Processors {
 
-		e.log.WithField("channel_id", pc.ChannelID).
+		e.log.WithField("channel_id", pc.ChannelName).
 			Info("creating and starting processor")
 
 		p, pErr := hf.NewProcessor(pc, e)
 		if pErr != nil {
 			return fmt.Errorf(
 				"create processor for channel_id=`%s`: %w",
-				pc.ChannelID, pErr)
+				pc.ChannelName, pErr)
 		}
 
 		defer func(p *hf.Processor) {

@@ -82,7 +82,7 @@ message PostLoginRes {
 }
 
 message GetPeersReq {
-  string channel_id = 1;
+  int64 channel_id = 1;
 }
 
 message GetPeersRes {
@@ -98,7 +98,7 @@ message GetChannelsRes {
 }
 
 message GetChannelConfigsReq {
-  string channel_id = 1;
+  int64 channel_id = 1;
 }
 
 message GetChannelConfigsRes {
@@ -107,7 +107,7 @@ message GetChannelConfigsRes {
 
 message GetChaincodesReq {
   int64 peer_id = 1;
-  string channel_id = 2;
+  int64 channel_id = 2;
 }
 
 message GetChaincodesRes {
@@ -115,7 +115,7 @@ message GetChaincodesRes {
 }
 
 message GetBlocksReq {
-  string channel_id = 1;
+  int64 channel_id = 1;
   int64 from_id = 3;
 }
 
@@ -124,10 +124,10 @@ message GetBlocksRes {
 }
 
 message GetTransactionsReq {
-  string channel_id = 1;
+  int64 channel_id = 1;
   int64 block_id = 2;
-
   google.protobuf.Timestamp from_created_at = 3;
+  bool load_more = 4;
 }
 
 message GetTransactionsRes {
@@ -135,8 +135,10 @@ message GetTransactionsRes {
 }
 
 message GetStatesReq {
-  string channel_id = 1;
+  int64 channel_id = 1;
   string transaction_id = 2;
+  google.protobuf.Timestamp from_created_at = 3;
+  bool load_more = 4;
 }
 
 message GetStatesRes {
@@ -145,7 +147,7 @@ message GetStatesRes {
 
 message GetOldStatesReq {
   string key = 1;
-  int64 from_id = 2;
+  int64 from_id = 4;
 }
 
 message GetOldStatesRes {

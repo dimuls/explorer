@@ -17,6 +17,7 @@ html {
         <el-menu-item index="channels">Channels</el-menu-item>
         <el-menu-item index="chaincodes">Chaincodes</el-menu-item>
         <el-menu-item index="blocks">Blocks</el-menu-item>
+        <el-menu-item index="transactions">Transactions</el-menu-item>
         <el-menu-item index="states">States</el-menu-item>
       </el-menu>
     </el-header>

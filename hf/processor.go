@@ -25,7 +25,7 @@ import (
 )
 
 type ProcessorConfig struct {
-	ChannelID        string   `yaml:"channel_id"`
+	ChannelName      string   `yaml:"channel_name"`
 	Chaincodes       []string `yaml:"chaincodes"`
 	Organization     string   `yaml:"organization"`
 	User             string   `yaml:"user"`
@@ -33,11 +33,11 @@ type ProcessorConfig struct {
 }
 
 type Processor struct {
-	channelID string
-	storage   Storage
-	log       *logrus.Entry
-	wg        sync.WaitGroup
-	close     chan struct{}
+	channelName string
+	storage     Storage
+	log         *logrus.Entry
+	wg          sync.WaitGroup
+	close       chan struct{}
 }
 
 type chaincodeEventSource struct {
@@ -53,7 +53,7 @@ func NewProcessor(c ProcessorConfig, s Storage) (p *Processor, err error) {
 
 	log := logrus.WithFields(logrus.Fields{
 		"subsystem":  "processor",
-		"channel_id": c.ChannelID,
+		"channel_id": c.ChannelName,
 	})
 
 	lastBlockID, err := s.LastBlockID(context.TODO())
@@ -69,7 +69,7 @@ func NewProcessor(c ProcessorConfig, s Storage) (p *Processor, err error) {
 		return nil, fmt.Errorf("create fabric SDK: %w", err)
 	}
 
-	chCtx := fsdk.ChannelContext(c.ChannelID,
+	chCtx := fsdk.ChannelContext(c.ChannelName,
 		fabsdk.WithUser(c.User))
 
 	evClient, err := event.New(chCtx, event.WithBlockEvents(), event.WithSeekType(seek.FromBlock),
@@ -114,10 +114,10 @@ func NewProcessor(c ProcessorConfig, s Storage) (p *Processor, err error) {
 	//}
 
 	p = &Processor{
-		channelID: c.ChannelID,
-		storage:   s,
-		log:       log,
-		close:     make(chan struct{}),
+		channelName: c.ChannelName,
+		storage:     s,
+		log:         log,
+		close:       make(chan struct{}),
 	}
 
 	p.wg.Add(1)
@@ -197,15 +197,9 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 		states         []*explorer.State
 	)
 
-	peer.Url = be.SourceURL
-	channel.Id = p.channelID
-	block.ChannelId = p.channelID
-
 	if be.Block.Header.Number > uint64(math.MaxInt64) {
 		return fmt.Errorf("block number greater than max int64")
 	}
-
-	block.Number = int64(be.Block.Header.Number)
 
 	for _, d := range be.Block.Data.Data {
 
@@ -231,6 +225,7 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 
 		transaction.Id = channelHeader.TxId
 		transaction.BlockId = block.Id
+		transaction.CreatedAt = channelHeader.Timestamp
 
 		transactions = append(transactions, transaction)
 
@@ -255,7 +250,6 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 
 			channelConfig := &explorer.ChannelConfig{}
 
-			channelConfig.ChannelId = p.channelID
 			channelConfig.CreatedAt = channelHeader.Timestamp
 			channelConfig.Raw = payload.Data
 
@@ -376,6 +370,7 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 
 						states = append(states, &explorer.State{
 							Key:           w.Key,
+							CreatedAt:     transaction.CreatedAt,
 							Type:          stateType,
 							TransactionId: transaction.Id,
 							RawValue:      w.Value,
@@ -394,12 +389,14 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 		return fmt.Errorf("begin transaction in storage: %w", err)
 	}
 
+	peer.Url = be.SourceURL
 	peer.Id, err = p.storage.AddPeerTx(ctx, tx, peer)
 	if err != nil {
 		return fmt.Errorf("add peer to storage: %w", err)
 	}
 
-	err = p.storage.AddChannelTx(ctx, tx, channel)
+	channel.Name = p.channelName
+	channel.Id, err = p.storage.AddChannelTx(ctx, tx, channel)
 	if err != nil {
 		return fmt.Errorf("add channel to storage: %w", err)
 	}
@@ -413,6 +410,7 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 	}
 
 	for _, cc := range channelConfigs {
+		cc.ChannelId = channel.Id
 		err = p.storage.AddChannelConfigTx(ctx, tx, cc)
 		if err != nil {
 			return fmt.Errorf("add channel config to storage: %w", err)
@@ -434,12 +432,15 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 		}
 	}
 
+	block.Number = int64(be.Block.Header.Number)
+	block.ChannelId = channel.Id
 	block.Id, err = p.storage.AddBlockTx(ctx, tx, block)
 	if err != nil {
 		return fmt.Errorf("add block to storage: %w", err)
 	}
 
 	for _, t := range transactions {
+		t.ChannelId = channel.Id
 		t.BlockId = block.Id
 		err = p.storage.AddTransactionTx(ctx, tx, t)
 		if err != nil {
@@ -448,6 +449,7 @@ func (p *Processor) processBlockEvent(log *logrus.Entry, be *fab.BlockEvent) err
 	}
 
 	for _, s := range states {
+		s.ChannelId = channel.Id
 		err = p.storage.AddStateTx(ctx, tx, s)
 		if err != nil {
 			return fmt.Errorf("add state to storage: %w", err)

@@ -14,22 +14,24 @@ message Peer {
 }
 
 message Channel {
-  // @inject_tag: db:"id"
-  string id = 1;
+  // @inject_tag: db:"id" goqu:"skipinsert"
+  int64 id = 1;
+  // @inject_tag: db:"name"
+  string name = 2;
 }
 
 message PeerChannel {
   // @inject_tag: db:"peer_id"
   int64 peer_id = 1;
   // @inject_tag: db:"channel_id"
-  string channel_id = 2;
+  int64 channel_id = 2;
 }
 
 message ChannelConfig {
   // @inject_tag: db:"id" goqu:"skipinsert"
   int64 id = 1;
   // @inject_tag: db:"channel_id"
-  string channel_id = 2;
+  int64 channel_id = 2;
   // @inject_tag: db:"raw"
   bytes raw = 3;
   // @inject_tag: db:"parsed"
@@ -49,7 +51,7 @@ message Chaincode {
 
 message ChannelChaincode {
   // @inject_tag: db:"channel_id"
-  string channel_id = 1;
+  int64 channel_id = 1;
   // @inject_tag: db:"chaincode_id"
   int64 chaincode_id = 2;
 }
@@ -58,7 +60,7 @@ message Block {
   // @inject_tag: db:"id" goqu:"skipinsert"
   int64 id = 1;
   // @inject_tag: db:"channel_id"
-  string channel_id = 2;
+  int64 channel_id = 2;
   // @inject_tag: db:"number"
   int64 number = 3;
 }
@@ -66,35 +68,47 @@ message Block {
 message Transaction {
   // @inject_tag: db:"id"
   string id = 1;
+  // @inject_tag: db:"channel_id"
+  int64 channel_id = 2;
   // @inject_tag: db:"block_id"
-  int64 block_id = 2;
+  int64 block_id = 3;
   // @inject_tag: db:"created_at"
-  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp created_at = 4;
 }
 
 message State {
   // @inject_tag: db:"key"
   string key = 1;
-  // @inject_tag: db:"type"
-  string type = 2;
+  // @inject_tag: db:"channel_id"
+  int64 channel_id = 2;
   // @inject_tag: db:"transaction_id"
   string transaction_id = 3;
+  // @inject_tag: db:"type"
+  string type = 4;
   // @inject_tag: db:"raw_value"
-  bytes raw_value = 4;
+  bytes raw_value = 5;
   // @inject_tag: db:"value"
-  bytes value = 5;
+  bytes value = 6;
+  // @inject_tag: db:"created_at"
+  google.protobuf.Timestamp created_at = 7;
 }
 
 message OldState {
   // @inject_tag: db:"id" goqu:"skipinsert"
   int64 id = 1;
-  // @inject_tag: db:"key"
-  string key = 2;
+  // @inject_tag: db:"channel_id"
+  int64 channel_id = 2;
   // @inject_tag: db:"transaction_id"
   string transaction_id = 3;
+  // @inject_tag: db:"key"
+  string key = 4;
+  // @inject_tag: db:"type"
+  string type = 5;
   // @inject_tag: db:"raw_value"
-  bytes raw_value = 4;
+  bytes raw_value = 6;
   // @inject_tag: db:"value"
-  bytes value = 5;
+  bytes value = 7;
+  // @inject_tag: db:"created_at"
+  google.protobuf.Timestamp created_at = 8;
 }
 

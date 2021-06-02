@@ -3,12 +3,15 @@ export default {
     encodeQuery(query) {
       const q = new URLSearchParams();
       Object.keys(query).forEach((k) => {
-        q.set(k, query[k]);
+        if (query[k]) {
+          q.set(k, query[k]);
+        }
       });
-      if (q.entries().length > 0) {
-        return "?" + q.toString();
+      let qq = q.toString();
+      if (qq.length > 0) {
+        qq = "?" + qq;
       }
-      return "";
+      return qq;
     },
     setQuery(name, value) {
       this.$router.push({

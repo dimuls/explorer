@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/doug-martin/goqu/v9"
 
@@ -64,10 +67,6 @@ func (e *Explorer) AddPeerTx(ctx context.Context, tx *sql.Tx,
 		Where(goqu.Ex{"url": p.Url}).
 		ScanValContext(ctx, &id)
 	if err != nil {
-		err2 := tx.Rollback()
-		if err2 != nil {
-			e.log.WithError(err2).Error("failed to rollback transaction")
-		}
 		return 0, fmt.Errorf("get peer from DB: %w", err)
 	}
 	if exists {
@@ -87,21 +86,41 @@ func (e *Explorer) AddPeerTx(ctx context.Context, tx *sql.Tx,
 }
 
 func (e *Explorer) AddChannelTx(ctx context.Context, tx *sql.Tx,
-	c *explorer.Channel) error {
+	c *explorer.Channel) (id int64, err error) {
 
-	_, err := goqu.NewTx(postgresDialect, tx).
-		Insert(channel).
-		Rows(c).
-		OnConflict(goqu.DoNothing()).
-		Executor().ExecContext(ctx)
-	if err != nil {
-		err2 := tx.Rollback()
-		if err2 != nil {
-			e.log.WithError(err2).Error("failed to rollback transaction")
+	defer func() {
+		if err != nil {
+			err2 := tx.Rollback()
+			if err2 != nil {
+				e.log.WithError(err2).
+					Error("failed to rollback transaction")
+			}
 		}
+	}()
+
+	txx := goqu.NewTx(postgresDialect, tx)
+
+	exists, err := txx.Select("id").
+		From(channel).
+		Where(goqu.Ex{"name": c.Name}).
+		ScanValContext(ctx, &id)
+	if err != nil {
+		return 0, fmt.Errorf("get channel from DB: %w", err)
+	}
+	if exists {
+		return id, nil
 	}
 
-	return err
+	_, err = txx.
+		Insert(channel).
+		Rows(c).
+		Returning("id").
+		Executor().ScanValContext(ctx, &id)
+	if err != nil {
+		return 0, fmt.Errorf("add channel to DB: %w", err)
+	}
+
+	return id, nil
 }
 
 func (e *Explorer) AddChannelConfigTx(ctx context.Context, tx *sql.Tx,
@@ -163,10 +182,6 @@ func (e *Explorer) AddChaincodeTx(ctx context.Context, tx *sql.Tx,
 		Where(goqu.Ex{"name": c.Name, "version": c.Version}).
 		ScanValContext(ctx, &id)
 	if err != nil {
-		err2 := tx.Rollback()
-		if err2 != nil {
-			e.log.WithError(err2).Error("failed to rollback transaction")
-		}
 		return 0, fmt.Errorf("get peer from DB: %w", err)
 	}
 	if exists {
@@ -224,10 +239,6 @@ func (e *Explorer) AddBlockTx(ctx context.Context, tx *sql.Tx,
 		Where(goqu.Ex{"channel_id": b.ChannelId, "number": b.Number}).
 		Executor().ScanValContext(ctx, &id)
 	if err != nil {
-		err2 := tx.Rollback()
-		if err2 != nil {
-			e.log.WithError(err2).Error("failed to rollback transaction")
-		}
 		return 0, fmt.Errorf("get peer from DB: %w", err)
 	}
 	if exists {
@@ -253,9 +264,9 @@ func (e *Explorer) AddTransactionTx(ctx context.Context, tx *sql.Tx,
 
 	_, err := goqu.NewTx(postgresDialect, tx).
 		Insert(transaction).
-		Cols("id", "block_id", "created_at").
 		Rows(goqu.Record{
 			"id":         t.Id,
+			"channel_id": t.ChannelId,
 			"block_id":   t.BlockId,
 			"created_at": t.CreatedAt.AsTime(),
 		}).
@@ -288,35 +299,55 @@ func (e *Explorer) AddStateTx(ctx context.Context, tx *sql.Tx,
 
 	var os explorer.State
 
-	exists, err := txx.Select().
+	rows, err := txx.Select("key", "channel_id", "transaction_id",
+		"type", "raw_value", "value", "created_at").
 		From(state).
 		Where(goqu.Ex{"key": as.Key}).
-		ScanStructContext(ctx, &os)
+		Executor().Query()
 	if err != nil {
 		return fmt.Errorf("get actual state: %w", err)
 	}
 
+	defer rows.Close()
+
+	var exists bool
+	if rows.Next() {
+		exists = true
+		var createdAt time.Time
+		err = rows.Scan(&os.Key, &os.ChannelId, &os.TransactionId, &os.Type,
+			&os.RawValue, &os.Value, &createdAt)
+		if err != nil {
+			return err
+		}
+		os.CreatedAt = timestamppb.New(createdAt)
+	}
+
 	ar := goqu.Record{
 		"key":            as.Key,
+		"channel_id":     as.ChannelId,
 		"transaction_id": as.TransactionId,
 		"type":           as.Type,
 		"raw_value":      hex.EncodeToString(as.RawValue),
+		"created_at":     as.CreatedAt.AsTime(),
 	}
 	if len(as.Value) > 0 {
 		ar["value"] = as.Value
 	}
 
-	or := goqu.Record{
-		"key":            os.Key,
-		"transaction_id": os.TransactionId,
-		"type":           as.Type,
-		"raw_value":      hex.EncodeToString(as.RawValue),
-	}
-	if len(as.Value) > 0 {
-		or["value"] = os.Value
-	}
-
 	if exists {
+
+		or := goqu.Record{
+			"key":            os.Key,
+			"channel_id":     os.ChannelId,
+			"transaction_id": os.TransactionId,
+			"type":           os.Type,
+			"raw_value":      hex.EncodeToString(os.RawValue),
+			"created_at":     os.CreatedAt.AsTime(),
+		}
+		if len(as.Value) > 0 {
+			or["value"] = os.Value
+		}
+
 		_, err = txx.
 			Insert(oldState).
 			Rows(or).Executor().Exec()
