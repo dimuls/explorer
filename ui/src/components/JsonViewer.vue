@@ -1,5 +1,16 @@
+<style>
+.el-drawer__body {
+  position: absolute;
+  top: 66.75px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: auto;
+}
+</style>
+
 <template>
-  <div ref="container"></div>
+  <div class="tree" ref="tree"></div>
 </template>
 
 <script>
@@ -9,6 +20,7 @@ import "json-tree-view/devtools.css";
 export default {
   name: "JsonViewer",
   props: {
+    js: {},
     json: {
       type: String,
     },
@@ -18,10 +30,16 @@ export default {
     },
   },
   mounted() {
-    const viewer = new JSONTreeView(this.rootName, JSON.parse(this.json));
+    let js;
+    if (this.js) {
+      js = this.js;
+    } else {
+      js = JSON.parse(this.json);
+    }
+    const viewer = new JSONTreeView(this.rootName, js);
     viewer.expand(true);
     viewer.readonly = true;
-    this.$refs.container.appendChild(viewer.dom);
+    this.$refs.tree.appendChild(viewer.dom);
   },
 };
 </script>

@@ -33,7 +33,10 @@
       <el-table-column prop="channelName" label="Channel"></el-table-column>
       <el-table-column prop="blockId" label="Block ID"></el-table-column>
       <el-table-column prop="id" label="ID"> </el-table-column>
-      <el-table-column prop="createdAt" label="Created At"></el-table-column>
+      <el-table-column
+        prop="createdAtReadable"
+        label="Created At"
+      ></el-table-column>
     </el-table>
   </infinite-scroll>
 </template>
@@ -42,11 +45,15 @@
 export default {
   name: "Transactions",
   data() {
+    let blockId;
+    if (this.$route.query.blockId) {
+      blockId = parseInt(this.$route.query.blockId);
+    }
     return {
       channels: [],
       channelsMap: {},
       channelId: undefined,
-      blockId: parseInt(this.$route.query.blockId),
+      blockId: blockId,
       fromCreatedAt: this.$route.query.fromCreatedAt,
       fromCreatedAtDate: this.parseDate(this.$route.query.fromCreatedAt),
       transactionsComplete: false,
@@ -56,6 +63,7 @@ export default {
   watch: {
     fromCreatedAt(fromCreatedAt) {
       this.setQuery("fromCreatedAt", fromCreatedAt);
+      this.fromCreatedAtDate = this.parseDate(fromCreatedAt);
     },
     channelId(channelId) {
       this.setQuery("channelId", channelId);
@@ -79,7 +87,7 @@ export default {
     async loadTransactions(more) {
       let fromCreatedAt;
       if (more) {
-        const lastTransaction = this.states[this.states.length - 1];
+        const lastTransaction = this.transactions[this.transactions.length - 1];
         fromCreatedAt = lastTransaction ? lastTransaction.createdAt : undefined;
       } else {
         fromCreatedAt = this.fromCreatedAt;
@@ -98,11 +106,11 @@ export default {
           ...res.data.transactions.map((t) => ({
             ...t,
             channelName: this.channelsMap[t.channelId].name,
-            createdAt: this.readableDate(this.parseDate(t.createdAt)),
+            createdAtReadable: this.readableDate(this.parseDate(t.createdAt)),
           }))
         );
         this.fromCreatedAt = res.data.transactions[0].createdAt;
-        this.fromCreatedAtDate = this.parseDate(this.fromCreatedAt);
+        this.transactionsComplete = false;
       } else {
         this.transactionsComplete = true;
       }
@@ -112,6 +120,7 @@ export default {
     },
     async reloadTransactions() {
       this.transactions.splice(0, this.transactions.length);
+      this.fromCreatedAt = undefined;
       await this.loadTransactions();
     },
   },

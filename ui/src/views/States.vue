@@ -65,7 +65,7 @@
       <json-viewer
         v-if="valueDrawer.value !== 'null'"
         :json="valueDrawer.value"
-        root-name="state"
+        root-name="value"
       />
       <div v-else>{{ valueDrawer.rawValue }}</div>
     </div>
@@ -100,6 +100,7 @@ export default {
   watch: {
     fromCreatedAt(fromCreatedAt) {
       this.setQuery("fromCreatedAt", fromCreatedAt);
+      this.fromCreatedAtDate = this.parseDate(fromCreatedAt);
     },
     channelId(channelId) {
       this.setQuery("channelId", channelId);
@@ -148,7 +149,6 @@ export default {
             loadMore: more,
           })
       );
-      console.log(this.fromCreatedAt, this.fromCreatedAtDate);
       if (res.data.states.length) {
         this.states.push(
           ...res.data.states.map((s) => ({
@@ -158,7 +158,7 @@ export default {
           }))
         );
         this.fromCreatedAt = res.data.states[0].createdAt;
-        this.fromCreatedAtDate = this.parseDate(this.fromCreatedAt);
+        this.statesComplete = false;
       } else {
         this.statesComplete = true;
       }
@@ -168,6 +168,7 @@ export default {
     },
     async reloadStates() {
       this.states.splice(0, this.states.length);
+      this.fromCreatedAt = undefined;
       await this.loadStates();
     },
   },

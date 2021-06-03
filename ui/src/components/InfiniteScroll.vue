@@ -22,6 +22,8 @@ export default {
       handler(complete) {
         if (complete) {
           window.removeEventListener("scroll", this.handleScroll);
+        } else {
+          window.addEventListener("scroll", this.handleScroll);
         }
       },
     },
@@ -42,9 +44,7 @@ export default {
     window.addEventListener("scroll", this.handleScroll);
   },
   unmounted() {
-    if (!this.complete) {
-      window.removeEventListener("scroll", this.handleScroll);
-    }
+    window.removeEventListener("scroll", this.handleScroll);
   },
 };
 </script>

@@ -1,3 +1,9 @@
+<style scoped>
+.channel-config {
+  padding: 0 2em 2em 2em;
+}
+</style>
+
 <template>
   <el-form :inline="true">
     <el-form-item>
@@ -11,22 +17,26 @@
       </el-select>
     </el-form-item>
   </el-form>
-  <el-table
-    :data="channels"
-    @row-click="toggleExpandChannelRow"
-    @expand-change="channelRowExpandToggled"
-    ref="channelsTable"
-  >
-    <el-table-column type="expand">
-      <template #default="{ row }">
-        <pre>
-          {{ channelsConfigs[row.id] }}
-        </pre>
-      </template>
-    </el-table-column>
+  <el-table :data="channels" ref="channelsTable">
     <el-table-column prop="id" label="ID"> </el-table-column>
     <el-table-column prop="name" label="Name"> </el-table-column>
+    <el-table-column fixed="right" label="" width="120">
+      <template #default="{ row }">
+        <el-button @click="showConfig(row)" type="text">Configs</el-button>
+      </template>
+    </el-table-column>
   </el-table>
+  <el-drawer
+    :title="configsDrawer.title"
+    v-model="configsDrawer.visible"
+    :before-close="(configsDrawer.channel = undefined)"
+    direction="rtl"
+    size="60%"
+  >
+    <div class="channel-config">
+      <json-viewer :js="configsDrawer.configs" root-name="value" />
+    </div>
+  </el-drawer>
 </template>
 
 <script>
@@ -38,12 +48,28 @@ export default {
       peerId: undefined,
       channels: [],
       channelsConfigs: {},
+      configsDrawer: {
+        channel: undefined,
+        title: undefined,
+        visible: false,
+        configs: undefined,
+      },
     };
   },
   watch: {
     peerId(peerId) {
       this.setQuery("peerId", peerId);
       this.reload();
+    },
+    "configsDrawer.channel"(channel) {
+      if (!channel) {
+        this.setQuery("showConfigs", undefined);
+        return;
+      }
+      this.setQuery("showConfigs", channel.name);
+      this.configsDrawer.title = channel.name;
+      this.configsDrawer.visible = true;
+      this.configsDrawer.configs = channel.configs;
     },
   },
   async mounted() {
@@ -67,19 +93,18 @@ export default {
         this.channels.push(...res.data.channels);
       }
     },
-    async getChannelConfigs(channelId) {
-      let configs = this.channelsConfigs[channelId];
-      if (configs) {
-        return configs;
+    async showConfig(channel) {
+      if (!channel.configs) {
+        const res = await this.$http.get(
+          "/channel_configs?channelId=" + channel.id
+        );
+        if (res.data.channelConfigs.length) {
+          channel.configs = res.data.channelConfigs.map((cc) =>
+            JSON.parse(atob(cc.parsed))
+          );
+        }
       }
-      const res = await this.$http.get(
-        "/channel_configs?channelId=" + channelId
-      );
-      if (res.data.channelConfigs.length) {
-        configs = res.data.channelConfigs;
-        this.channelsConfigs[channelId] = configs;
-      }
-      return configs;
+      this.configsDrawer.channel = channel;
     },
   },
 };
