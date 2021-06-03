@@ -22,19 +22,19 @@
     <el-table-column prop="name" label="Name"> </el-table-column>
     <el-table-column fixed="right" label="" width="120">
       <template #default="{ row }">
-        <el-button @click="showConfig(row)" type="text">Configs</el-button>
+        <el-button @click="showConfig(row)" type="text">Config</el-button>
       </template>
     </el-table-column>
   </el-table>
   <el-drawer
     :title="configsDrawer.title"
     v-model="configsDrawer.visible"
-    :before-close="(configsDrawer.channel = undefined)"
+    :before-close="() => (this.configsDrawer.channel = undefined)"
     direction="rtl"
     size="60%"
   >
     <div class="channel-config">
-      <json-viewer :js="configsDrawer.configs" root-name="value" />
+      <json-viewer :js="configsDrawer.configs[0]" root-name="config" />
     </div>
   </el-drawer>
 </template>
@@ -45,7 +45,7 @@ export default {
   data() {
     return {
       peers: [],
-      peerId: undefined,
+      peerId: this.$route.query.peerId,
       channels: [],
       channelsConfigs: {},
       configsDrawer: {
@@ -63,10 +63,10 @@ export default {
     },
     "configsDrawer.channel"(channel) {
       if (!channel) {
-        this.setQuery("showConfigs", undefined);
+        this.setQuery("showConfig", undefined);
         return;
       }
-      this.setQuery("showConfigs", channel.name);
+      this.setQuery("showConfig", channel.name);
       this.configsDrawer.title = channel.name;
       this.configsDrawer.visible = true;
       this.configsDrawer.configs = channel.configs;

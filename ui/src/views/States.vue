@@ -21,6 +21,7 @@
         <el-input
           v-model="transactionId"
           placeholder="Transaction ID"
+          clearable
         ></el-input>
       </el-form-item>
       <el-form-item>

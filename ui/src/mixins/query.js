@@ -1,4 +1,11 @@
+import debounce from "lodash.debounce";
+
 export default {
+  data() {
+    return {
+      queryChanges: [],
+    };
+  },
   methods: {
     encodeQuery(query) {
       const q = new URLSearchParams();
@@ -14,12 +21,16 @@ export default {
       return qq;
     },
     setQuery(name, value) {
-      this.$router.push({
-        query: {
-          ...this.$route.query,
-          [name]: value || undefined,
-        },
-      });
+      console.log(name, value);
+      this.queryChanges.push({ [name]: value || undefined });
+      this.__updateQuery();
     },
+    __updateQuery: debounce(function () {
+      const query = this.queryChanges.reduce(
+        (qc, q) => ({ ...qc, ...q }),
+        this.$route.query
+      );
+      this.$router.push({ query });
+    }, 100),
   },
 };
