@@ -58,7 +58,7 @@
   <el-drawer
     :title="valueDrawer.title"
     v-model="valueDrawer.visible"
-    :before-close="(valueDrawer.state = undefined)"
+    :before-close="() => (valueDrawer.state = undefined)"
     direction="rtl"
     size="60%"
   >
@@ -89,7 +89,6 @@ export default {
       states: [],
       statesComplete: false,
       valueDrawer: {
-        key: this.$route.query.showState,
         state: undefined,
         title: undefined,
         visible: false,
@@ -113,10 +112,11 @@ export default {
     },
     "valueDrawer.state"(state) {
       if (!state) {
-        this.setQuery("showState", undefined);
+        this.setQuery("showValue", undefined);
+        this.valueDrawer.visible = false;
         return;
       }
-      this.setQuery("showState", state.key);
+      this.setQuery("showValue", state.key);
       this.valueDrawer.title = state.key;
       this.valueDrawer.visible = true;
       this.valueDrawer.value = atob(state.value);
@@ -131,6 +131,11 @@ export default {
     }
     this.channelId = this.$route.query.channelId;
     await this.loadStates();
+    if (this.$route.query.showValue) {
+      this.valueDrawer.state = this.states.find(
+        (s) => s.key === this.$route.query.showValue
+      );
+    }
   },
   methods: {
     async loadStates(more) {

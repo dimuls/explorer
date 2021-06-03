@@ -21,7 +21,6 @@ export default {
       return qq;
     },
     setQuery(name, value) {
-      console.log(name, value);
       this.queryChanges.push({ [name]: value || undefined });
       this.__updateQuery();
     },

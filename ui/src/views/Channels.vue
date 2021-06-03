@@ -29,7 +29,7 @@
   <el-drawer
     :title="configsDrawer.title"
     v-model="configsDrawer.visible"
-    :before-close="() => (this.configsDrawer.channel = undefined)"
+    :before-close="() => (configsDrawer.channel = undefined)"
     direction="rtl"
     size="60%"
   >
@@ -64,6 +64,7 @@ export default {
     "configsDrawer.channel"(channel) {
       if (!channel) {
         this.setQuery("showConfig", undefined);
+        this.configsDrawer.visible = false;
         return;
       }
       this.setQuery("showConfig", channel.name);
@@ -78,7 +79,12 @@ export default {
       this.peers.push(...res.data.peers);
     }
     this.peerId = this.$route.query.peerId;
-    this.reload();
+    await this.reload();
+    if (this.$route.query.showConfig) {
+      this.showConfig(
+        this.channels.find((c) => c.name === this.$route.query.showConfig)
+      );
+    }
   },
   methods: {
     async reload() {
@@ -94,6 +100,9 @@ export default {
       }
     },
     async showConfig(channel) {
+      if (!channel) {
+        return;
+      }
       if (!channel.configs) {
         const res = await this.$http.get(
           "/channel_configs?channelId=" + channel.id
